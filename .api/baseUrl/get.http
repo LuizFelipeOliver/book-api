@@ -1,0 +1,6 @@
+### Get
+# @name = "teste"
+
+GET http://localhost:8080/greeting?name={{name}} HTTP/1.1
+Content-Type: {{Content-Type}}
+Accept: {{Accept}}
