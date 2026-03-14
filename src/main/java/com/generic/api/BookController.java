@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.generic.api.request.BookRequest;
 
 import jakarta.validation.Valid;
 
@@ -34,9 +35,17 @@ public class BookController {
         return bookRepository.findByName(name);
     }
 
-    //TODO: desaclopar Book criando um DTO
+    //TODO:: adicionar UseCase para desacoplar a lógica do controller
+    //TODO: validar unicidade de Book por name e author no UseCase
+
     @PostMapping
-    public Book create(@Valid @RequestBody Book book) {
-        return bookRepository.save(book);
+    public Book create(@Valid @RequestBody BookRequest request) {
+        return bookRepository.save(
+                new Book(
+                    request.name(),
+                    request.author(),
+                    request.available()
+                )
+            );
     }
 }
