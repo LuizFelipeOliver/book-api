@@ -27,21 +27,36 @@ public class BookController {
     }
 
     @GetMapping
-    public Iterable<Book> getBookAll() {
-        return bookRepository.findAll();
+    public Iterable<BookResponse> getBookAll() {
+        return bookRepository.findAll()
+                .stream()
+                .map(book -> new BookResponse(
+                        book.getId(),
+                        book.getName(),
+                        book.getAuthor(),
+                        book.isAvailable()))
+                .toList();
     }
 
     @GetMapping("/name")
-    public List<Book> getByName(@RequestParam("name") String name) {
-        return bookRepository.findByName(name);
+    public List<BookResponse> getByName(@RequestParam("name") String name) {
+        return bookRepository.findByName(name)
+                .stream()
+                .map(book -> new BookResponse(
+                        book.getId(),
+                        book.getName(),
+                        book.getAuthor(),
+                        book.isAvailable()))
+
+                .toList();
     }
 
-    //TODO:: adicionar UseCase para desacoplar a lógica do controller
-    //TODO: validar unicidade de Book por name e author no UseCase
+    // TODO:: adicionar UseCase para desacoplar a lógica do controller
+    // TODO: validar unicidade de Book por name e author no UseCase
 
     @PostMapping
     public BookResponse create(@Valid @RequestBody BookRequest request) {
-        Book book = new Book(request.name(),request.author(),request.available());
+        Book book = new Book(request.name(), request.author(), request.available());
 
         Book saved = bookRepository.save(book);
 
