@@ -12,8 +12,8 @@
 - [x] Validações com Bean Validation (`@NotBlank`, `@Size`)
 - [x] Tratamento de erros global (`@RestControllerAdvice`)
 - [x] Testes unitários do BookService
-- [ ] PUT `/book/{id}` — atualizar livro
-- [ ] DELETE `/book/{id}` — deletar livro
+- [x] PUT `/book/{id}` — atualizar livro
+- [x] DELETE `/book/{id}` — deletar livro
 - [ ] Testes de integração do BookController (MockMvc)
 - [ ] Trocar H2 por PostgreSQL
 - [ ] Docker Compose com aplicação + banco
