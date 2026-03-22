@@ -33,6 +33,7 @@
 
 ## v0.3.0 — Arquitetura
 
+- [ ] Estudar e implementar FilterPipeline com filtros por entidade
 - [ ] Value Object `Author` (DDD)
 - [ ] Refatorar para Arquitetura Hexagonal completa (ports & adapters)
 - [ ] Separação clara: domínio, aplicação, infraestrutura

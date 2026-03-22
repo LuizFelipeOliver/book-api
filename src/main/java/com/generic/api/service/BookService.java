@@ -1,6 +1,6 @@
 package com.generic.api.service;
 
-import java.util.List;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 
@@ -33,22 +33,35 @@ public class BookService {
         return BookMapper.toResponse(saved);
     }
 
-    public Iterable<BookResponse> getBookAll() {
-        return bookRepository.findAll()
-                .stream()
-                .map(BookMapper::toResponse)
-                .toList();
+    public BookResponse update(Long id, BookRequest request) {
+        Book book = bookRepository.findById(id).orElseThrow(() -> new ApiException(404, "Livro não encontrado"));
+        book.update(request.name(), request.author(), request.available());
+        Book saved = bookRepository.save(book);
+        return BookMapper.toResponse(saved);
+    }
+
+    public void delete(Long id) {
+        bookRepository.findById(id).orElseThrow(() -> new ApiException(404, "Livro não encontrado"));
+        bookRepository.deleteById(id);
+    }
+
+    // TODO: evoluir filtro para um Specification
+    public Iterable<BookResponse> getBookAll(String name, String author) {
+        Stream<Book> stream = bookRepository.findAll().stream();
+
+        if (name != null) {
+            stream = stream.filter(b -> b.getName().toLowerCase().contains(name.toLowerCase()));
+        }
+
+        if (author != null) {
+            stream = stream.filter(b -> b.getAuthor().toLowerCase().contains(author.toLowerCase()));
+        }
+
+        return stream.map(BookMapper::toResponse).toList();
     }
 
     public BookResponse getById(Long id) {
         Book book = bookRepository.findById(id).orElseThrow(() -> new ApiException(404, "Livro não encontrado"));
         return BookMapper.toResponse(book);
-    }
-
-    public List<BookResponse> getByName(String name) {
-        return bookRepository.findByNameContainingIgnoreCase(name)
-                .stream()
-                .map(BookMapper::toResponse)
-                .toList();
     }
 }
