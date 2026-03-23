@@ -15,8 +15,8 @@
 - [x] PUT `/book/{id}` — atualizar livro
 - [x] DELETE `/book/{id}` — deletar livro
 - [x] Testes de integração do BookController (MockMvc)
-- [ ] Trocar H2 por PostgreSQL
-- [ ] Docker Compose com aplicação + banco
+- [X] Trocar H2 por PostgreSQL
+- [X] Docker Compose com aplicação + banco
 
 ---
 
