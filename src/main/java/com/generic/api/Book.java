@@ -24,7 +24,13 @@ public class Book {
     public Book(String name, String author, Boolean available) {
         this.name = name;
         this.author = author;
-        this.available =  available != null ? available : false;
+        this.available = available != null ? available : false;
+    }
+
+    public void update(String name, String author, Boolean available) {
+        this.name = name;
+        this.author = author;
+        this.available = available != null ? available : false;
     }
 
     @Override
