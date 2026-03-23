@@ -14,7 +14,7 @@
 - [x] Testes unitários do BookService
 - [x] PUT `/book/{id}` — atualizar livro
 - [x] DELETE `/book/{id}` — deletar livro
-- [ ] Testes de integração do BookController (MockMvc)
+- [x] Testes de integração do BookController (MockMvc)
 - [ ] Trocar H2 por PostgreSQL
 - [ ] Docker Compose com aplicação + banco
 
