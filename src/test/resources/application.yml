@@ -11,3 +11,7 @@ spring:
           time_zone: UTC
   flyway:
     enabled: false
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+  expiration: ${JWT_EXPIRATION}
