@@ -22,9 +22,9 @@
 
 ## v0.2.0 — Autenticação
 
-- [ ] Spring Security + JWT
-- [ ] `POST /auth/register`
-- [ ] `POST /auth/login` — retorna JWT
+- [x] Spring Security + JWT
+- [x] `POST /auth/register`
+- [x] `POST /auth/login` — retorna JWT
 - [ ] Roles: `ADMIN`, `USER`
 - [ ] Cada usuário só vê/edita os livros que cadastrou
 - [ ] Proteção de rotas por role

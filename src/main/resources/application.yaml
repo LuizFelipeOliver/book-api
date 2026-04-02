@@ -1,12 +1,23 @@
- spring:
-    application:
-      name: api
-    datasource:
-      url: jdbc:postgresql://localhost:5432/api
-      username: api
-      password: api
-    jpa:
-      database-platform: org.hibernate.dialect.PostgreSQLDialect
-      hibernate:
-        ddl-auto: update
-      open-in-view: false
+spring:
+  docker:
+    compose:
+      enabled: false
+  application:
+    name: api
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB:mydatabase}
+    username: ${POSTGRES_USER:myuser}
+    password: ${POSTGRES_PASSWORD:secret}
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+jwt:
+  secret-key: ${Secret_KEY}
+  expiration: 86400000
+
+logging:
+  level:
+    org.springframework.security: DEBUG
