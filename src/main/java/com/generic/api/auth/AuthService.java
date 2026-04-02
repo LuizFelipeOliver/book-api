@@ -21,6 +21,8 @@ public class AuthService {
     }
 
     public AuthResponse register(AuthRequest request) {
+        if (userRepository.findByEmail(request.email()).isPresent())
+            throw new ApiException(409, "email ja cadastrado");
         User user = new User(
                 request.name(),
                 request.email(),
