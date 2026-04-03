@@ -1,0 +1,21 @@
+### Get all books
+GET http://localhost:8080/book HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Get by name
+@name = Stardust
+
+GET http://localhost:8080/book?name={{name}} HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Get by author
+@author = Neil Gaiman
+
+GET http://localhost:8080/book?author={{author}} HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}

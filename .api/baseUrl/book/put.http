@@ -1,0 +1,15 @@
+### Update book
+@id = 1
+@name = Stardust - Mistério da Estrela
+@author = Neil Gaiman
+
+PUT http://localhost:8080/book/{{id}} HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+{
+    "name": "{{name}}",
+    "author": "{{author}}",
+    "available": false
+}
