@@ -4,9 +4,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.generic.api.auth.UserRepository;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -22,17 +26,43 @@ public class BookControllerTest extends AbstractIntegrationTest {
     @Autowired
     private BookRepository bookRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private MockMvc mockMvc;
+    private String token;
 
     @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+    void setUp() throws Exception {
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+                .apply(SecurityMockMvcConfigurers.springSecurity())
+                .build();
+
+        userRepository.deleteAll();
         bookRepository.deleteAll();
+
+        String registerBody = """
+                {
+                  "name": "Test User",
+                  "email": "test@email.com",
+                  "password": "123456"
+                }
+                """;
+
+        String response = mockMvc.perform(post("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(registerBody))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        token = new ObjectMapper().readTree(response).get("token").asText();
     }
 
     @Test
     void getBookAll_whenNoBooksExist_returnsEmptyList() throws Exception {
-        mockMvc.perform(get("/book"))
+        mockMvc.perform(get("/book")
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isEmpty());
     }
@@ -42,7 +72,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
         bookRepository.save(new Book("Clean Code", "Robert Martin", true));
         bookRepository.save(new Book("The Pragmatic Programmer", "David Thomas", false));
 
-        mockMvc.perform(get("/book"))
+        mockMvc.perform(get("/book")
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].name").value("Clean Code"))
@@ -55,7 +86,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
         bookRepository.save(new Book("Clean Architecture", "Robert Martin", true));
         bookRepository.save(new Book("The Pragmatic Programmer", "David Thomas", false));
 
-        mockMvc.perform(get("/book").param("name", "Clean"))
+        mockMvc.perform(get("/book").param("name", "Clean")
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
     }
@@ -66,7 +98,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
         bookRepository.save(new Book("Clean Architecture", "Robert Martin", true));
         bookRepository.save(new Book("The Pragmatic Programmer", "David Thomas", false));
 
-        mockMvc.perform(get("/book").param("author", "Robert"))
+        mockMvc.perform(get("/book").param("author", "Robert")
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
     }
@@ -77,7 +110,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
         bookRepository.save(new Book("Clean Architecture", "Robert Martin", true));
         bookRepository.save(new Book("The Pragmatic Programmer", "David Thomas", false));
 
-        mockMvc.perform(get("/book").param("name", "Clean").param("author", "Robert"))
+        mockMvc.perform(get("/book").param("name", "Clean").param("author", "Robert")
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
     }
@@ -86,7 +120,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
     void getBookAll_filterWithNoMatch_returnsEmptyList() throws Exception {
         bookRepository.save(new Book("Clean Code", "Robert Martin", true));
 
-        mockMvc.perform(get("/book").param("name", "nonexistent"))
+        mockMvc.perform(get("/book").param("name", "nonexistent")
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isEmpty());
     }
@@ -95,7 +130,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
     void getById_whenBookExists_returnsBook() throws Exception {
         Book saved = bookRepository.save(new Book("Clean Code", "Robert Martin", true));
 
-        mockMvc.perform(get("/book/{id}", saved.getId()))
+        mockMvc.perform(get("/book/{id}", saved.getId())
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(saved.getId()))
                 .andExpect(jsonPath("$.name").value("Clean Code"))
@@ -105,7 +141,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
 
     @Test
     void getById_whenBookDoesNotExist_returns404() throws Exception {
-        mockMvc.perform(get("/book/{id}", 999L))
+        mockMvc.perform(get("/book/{id}", 999L)
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
     }
 
@@ -121,7 +158,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
 
         mockMvc.perform(post("/book")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
+                .content(body)
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.name").value("Clean Code"))
@@ -140,7 +178,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
 
         mockMvc.perform(post("/book")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
+                .content(body)
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available").value(false));
     }
@@ -157,7 +196,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
 
         mockMvc.perform(post("/book")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
+                .content(body)
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isBadRequest());
     }
 
@@ -173,7 +213,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
 
         mockMvc.perform(post("/book")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
+                .content(body)
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isBadRequest());
     }
 
@@ -189,7 +230,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
 
         mockMvc.perform(post("/book")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
+                .content(body)
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isBadRequest());
     }
 
@@ -205,7 +247,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
 
         mockMvc.perform(post("/book")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
+                .content(body)
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isBadRequest());
     }
 
@@ -223,7 +266,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
 
         mockMvc.perform(put("/book/{id}", saved.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
+                .content(body)
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(saved.getId()))
                 .andExpect(jsonPath("$.name").value("New Name"))
@@ -243,7 +287,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
 
         mockMvc.perform(put("/book/{id}", 999L)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
+                .content(body)
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
     }
 
@@ -261,7 +306,8 @@ public class BookControllerTest extends AbstractIntegrationTest {
 
         mockMvc.perform(put("/book/{id}", saved.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
+                .content(body)
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isBadRequest());
     }
 
@@ -269,13 +315,24 @@ public class BookControllerTest extends AbstractIntegrationTest {
     void delete_whenBookExists_returns204() throws Exception {
         Book saved = bookRepository.save(new Book("Clean Code", "Robert Martin", true));
 
-        mockMvc.perform(delete("/book/{id}", saved.getId()))
+        mockMvc.perform(delete("/book/{id}", saved.getId())
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     void delete_whenBookDoesNotExist_returns404() throws Exception {
-        mockMvc.perform(delete("/book/{id}", 999L))
+        mockMvc.perform(delete("/book/{id}", 999L)
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void anyRequest_withoutToken_returns401() throws Exception {
+        mockMvc.perform(get("/book")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/book/1")).andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/book").contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isUnauthorized());
+        mockMvc.perform(put("/book/1").contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isUnauthorized());
+        mockMvc.perform(delete("/book/1")).andExpect(status().isUnauthorized());
     }
 }
