@@ -335,4 +335,132 @@ public class BookControllerTest extends AbstractIntegrationTest {
         mockMvc.perform(put("/book/1").contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isUnauthorized());
         mockMvc.perform(delete("/book/1")).andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void anyRequest_withInvalidToken_returns401() throws Exception {
+        String invalidToken = "invalid.jwt.token";
+
+        mockMvc.perform(get("/book")
+                .header("Authorization", "Bearer " + invalidToken))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/book/1")
+                .header("Authorization", "Bearer " + invalidToken))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void update_withAvailableFalse_persistsCorrectly() throws Exception {
+        Book saved = bookRepository.save(new Book("Stardust", "Neil Gaiman", true));
+
+        String body = """
+                {
+                  "name": "Stardust - Mistério da Estrela",
+                  "author": "Neil Gaiman",
+                  "available": false
+                }
+                """;
+
+        mockMvc.perform(put("/book/{id}", saved.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Stardust - Mistério da Estrela"))
+                .andExpect(jsonPath("$.author").value("Neil Gaiman"))
+                .andExpect(jsonPath("$.available").value(false));
+    }
+
+    @Test
+    void create_withAvailableTrue_persistsCorrectly() throws Exception {
+        String body = """
+                {
+                  "name": "Stardust - Mistério da Estrela",
+                  "author": "Neil Gaiman",
+                  "available": true
+                }
+                """;
+
+        mockMvc.perform(post("/book")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(body)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Stardust - Mistério da Estrela"))
+                .andExpect(jsonPath("$.author").value("Neil Gaiman"))
+                .andExpect(jsonPath("$.available").value(true));
+    }
+
+    @Test
+    void delete_andConfirmBookNoLongerExists() throws Exception {
+        Book saved = bookRepository.save(new Book("Stardust", "Neil Gaiman", true));
+
+        mockMvc.perform(delete("/book/{id}", saved.getId())
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/book/{id}", saved.getId())
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getBookAll_filterByName_returnsOnlyExactNameMatches() throws Exception {
+        bookRepository.save(new Book("Stardust", "Neil Gaiman", true));
+        bookRepository.save(new Book("American Gods", "Neil Gaiman", true));
+
+        mockMvc.perform(get("/book").param("name", "Stardust")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].name").value("Stardust"));
+    }
+
+    @Test
+    void getBookAll_filterByAuthor_returnsOnlyMatchingAuthorBooks() throws Exception {
+        bookRepository.save(new Book("Stardust", "Neil Gaiman", true));
+        bookRepository.save(new Book("American Gods", "Neil Gaiman", true));
+        bookRepository.save(new Book("Clean Code", "Robert Martin", true));
+
+        mockMvc.perform(get("/book").param("author", "Neil Gaiman")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    void getById_returnsCorrectBookFields() throws Exception {
+        Book saved = bookRepository.save(new Book("Stardust", "Neil Gaiman", true));
+
+        mockMvc.perform(get("/book/{id}", saved.getId())
+                .header("Authorization", "Bearer " + token)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(saved.getId()))
+                .andExpect(jsonPath("$.name").value("Stardust"))
+                .andExpect(jsonPath("$.author").value("Neil Gaiman"))
+                .andExpect(jsonPath("$.available").value(true));
+    }
+
+    @Test
+    void update_preservesBookId() throws Exception {
+        Book saved = bookRepository.save(new Book("Old Name", "Old Author", true));
+        Long originalId = saved.getId();
+
+        String body = """
+                {
+                  "name": "Stardust - Mistério da Estrela",
+                  "author": "Neil Gaiman",
+                  "available": false
+                }
+                """;
+
+        mockMvc.perform(put("/book/{id}", originalId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(originalId));
+    }
 }
