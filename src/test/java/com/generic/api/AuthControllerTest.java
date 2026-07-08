@@ -176,4 +176,134 @@ public class AuthControllerTest extends AbstractIntegrationTest {
                 .content(body))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void login_withBlankName_returns400() throws Exception {
+        String body = """
+                {
+                  "name": "",
+                  "email": "user@email.com",
+                  "password": "password123"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void login_withBlankPassword_returns400() throws Exception {
+        String body = """
+                {
+                  "name": "User",
+                  "email": "user@email.com",
+                  "password": ""
+                }
+                """;
+
+        mockMvc.perform(post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void login_withEmptyBody_returns400() throws Exception {
+        mockMvc.perform(post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void register_withBlankName_returns400() throws Exception {
+        String body = """
+                {
+                  "name": "",
+                  "email": "user@email.com",
+                  "password": "password123"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void register_withBlankPassword_returns400() throws Exception {
+        String body = """
+                {
+                  "name": "User",
+                  "email": "user@email.com",
+                  "password": ""
+                }
+                """;
+
+        mockMvc.perform(post("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void register_withEmptyBody_returns400() throws Exception {
+        mockMvc.perform(post("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void register_withValidRequest_responseContainsTokenField() throws Exception {
+        String body = """
+                {
+                  "name": "User",
+                  "email": "user@email.com",
+                  "password": "password123"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.token").isNotEmpty());
+    }
+
+    @Test
+    void login_withValidCredentials_responseContainsTokenField() throws Exception {
+        String registerBody = """
+                {
+                  "name": "User",
+                  "email": "user@email.com",
+                  "password": "password123"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(registerBody));
+
+        String loginBody = """
+                {
+                  "name": "User",
+                  "email": "user@email.com",
+                  "password": "password123"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(loginBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.token").isNotEmpty());
+    }
 }
